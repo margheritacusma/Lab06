@@ -1,3 +1,5 @@
+import mysql.connector
+
 from database.DB_connect import get_connection
 from model.strumento import Strumento
 from model.prestito import Prestito
@@ -35,7 +37,38 @@ class DepositoStrumenti:
             Funzione che legge tutti gli strumenti nel database
             :return: una lista con tutti gli strumenti presenti oppure None
         """
-        # TODO
+        cnx= get_connection()
+        if cnx is None:
+            return None
+        lista_strumenti=[]
+        cursor= None
+        try:
+            cursor = cnx.cursor(dictionary=True)
+            query = ("""SELECT *
+                     FROM strumento""")
+            cursor.execute(query)
+
+            for riga in cursor:
+                s= Strumento(
+                    codice=riga['codice'],
+                    tipo= riga['tipo'],
+                    marca= riga['marca'],
+                    anno_acquisto= riga['anno_acquisto'],
+                    valore= riga['valore'],
+                    disponibile= bool(riga['disponibile'])
+                )
+                lista_strumenti.append(s)
+
+            cursor.close()
+            cnx.close()
+            return lista_strumenti
+
+        except mysql.connector.Error as err:
+            print(f"Errore durante la lettura degli strumenti: {err}")
+            if cursor is not None:
+                cursor.close()
+            cnx.close()
+            return None
 
     def cerca_strumenti_per_tipo(self, tipo) -> list[Strumento] | None:
         """
@@ -43,4 +76,36 @@ class DepositoStrumenti:
             :param tipo: il tipo dello strumento (es. "Chitarra")
             :return: una lista con tutti gli strumenti del tipo indicato oppure None
         """
-        # TODO
+        cnx = get_connection()
+        if cnx is None:
+            return None
+        lista_strumenti = []
+        cursor = None
+        try:
+            cursor = cnx.cursor(dictionary=True)
+            query = ("""SELECT *
+                        FROM strumento
+                        WHERE LOWER(tipo)= LOWER(%s)""")
+            cursor.execute(query, (tipo,))
+
+            for riga in cursor:
+                s = Strumento(
+                    codice=riga['codice'],
+                    tipo=riga['tipo'],
+                    marca=riga['marca'],
+                    anno_acquisto=riga['anno_acquisto'],
+                    valore=riga['valore'],
+                    disponibile=bool(riga['disponibile'])
+                )
+                lista_strumenti.append(s)
+
+            cursor.close()
+            cnx.close()
+            return lista_strumenti
+
+        except mysql.connector.Error as err:
+            print(f"Errore durante la ricerca del tipo di sturmento: {err}")
+            if cursor is not None:
+                cursor.close()
+            cnx.close()
+            return None
